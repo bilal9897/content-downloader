@@ -15,6 +15,10 @@
   --color-glass-border: rgba(255, 255, 255, 0.1);
   --color-glass-surface: rgba(255, 255, 255, 0.05);
   --color-glass-highlight: rgba(255, 255, 255, 0.2);
+  
+  /* Additional color utilities for glass variants */
+  --color-glass-border-light: rgba(255, 255, 255, 0.05);
+  --color-glass-surface-light: rgba(255, 255, 255, 0.02);
 
   --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
   --background-image-gradient-conic: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));

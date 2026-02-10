@@ -262,7 +262,9 @@ export default function Downloader() {
                 title: videoInfo.title,
                 thumbnail: videoInfo.thumbnail,
                 format: format,
+                quality: quality,
             });
+
         } finally {
             setLoading(false);
             setDownloadProgress(0);

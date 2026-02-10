@@ -8,10 +8,12 @@ export interface QueueItem {
     title: string;
     thumbnail: string;
     format: "video" | "audio" | "subtitles";
+    quality: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     progress: number;
     error?: string;
 }
+
 
 export function useQueue() {
     const [queue, setQueue] = useState<QueueItem[]>([]);
