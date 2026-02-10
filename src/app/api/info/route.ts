@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import ytdl from '@distube/ytdl-core';
+import { Innertube, UniversalCache } from 'youtubei.js';
+
+// @ts-ignore
 const { instagramGetUrl } = require('instagram-url-direct');
 
 export async function POST(request: Request) {
@@ -11,33 +13,67 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        const isYouTube = ytdl.validateURL(url);
         const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
+        const isYouTube = url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//);
 
         if (isYouTube) {
-            const info = await ytdl.getInfo(url);
+            // Initialize Innertube (creates a session)
+            const yt = await Innertube.create({
+                cache: new UniversalCache(false),
+                generate_session_locally: true // Key for serverless environments
+            });
+
+            // Get video ID from URL
+            // Simple regex for ID extraction
+            let videoId = '';
+            if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1]?.split('?')[0];
+            } else if (url.includes('v=')) {
+                videoId = url.split('v=')[1]?.split('&')[0];
+            } else if (url.includes('shorts/')) {
+                videoId = url.split('shorts/')[1]?.split('?')[0];
+            }
+
+            if (!videoId) {
+                return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
+            }
+
+            const info = await yt.getInfo(videoId);
 
             // Extract formats
-            const formats = info.formats.map((f: any) => ({
-                format_id: f.itag?.toString(),
-                ext: f.container,
-                resolution: f.qualityLabel || 'audio only',
-                filesize: f.contentLength ? parseInt(f.contentLength) : 0,
-                vcodec: f.videoCodec,
-                acodec: f.audioCodec,
-                url: f.url,
-                hasAudio: f.hasAudio,
-                hasVideo: f.hasVideo
-            }));
+            // Innertube returns a complex object, we need to adapt it
+            const streamingData = info.streaming_data;
+            let formats: any[] = [];
+
+            if (streamingData) {
+                const combinedFormats = [
+                    ...(streamingData.formats || []),
+                    ...(streamingData.adaptive_formats || [])
+                ];
+
+                formats = combinedFormats.map((f: any) => ({
+                    format_id: f.itag?.toString(),
+                    ext: f.mime_type?.split(';')[0]?.split('/')[1] || 'mp4',
+                    resolution: f.quality_label || 'audio only',
+                    filesize: f.content_length ? parseInt(f.content_length) : 0,
+                    vcodec: f.mime_type?.includes('video') ? 'h264' : 'none',
+                    acodec: f.mime_type?.includes('audio') ? 'aac' : 'none',
+                    url: f.url,
+                    hasAudio: f.has_audio,
+                    hasVideo: f.has_video
+                }));
+            }
+
+            const basicInfo = info.basic_info;
 
             return NextResponse.json({
-                id: info.videoDetails.videoId,
-                title: info.videoDetails.title,
-                thumbnail: info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1].url,
-                duration: parseInt(info.videoDetails.lengthSeconds),
-                uploader: info.videoDetails.author.name,
-                view_count: parseInt(info.videoDetails.viewCount),
-                description: info.videoDetails.description,
+                id: basicInfo.id,
+                title: basicInfo.title,
+                thumbnail: basicInfo.thumbnail ? basicInfo.thumbnail[0].url : '',
+                duration: basicInfo.duration || 0,
+                uploader: basicInfo.author || 'Unknown',
+                view_count: basicInfo.view_count || 0,
+                description: basicInfo.short_description || '',
                 formats: formats,
                 _type: 'video',
                 platform: 'youtube'
@@ -64,7 +100,7 @@ export async function POST(request: Request) {
 
             return NextResponse.json({
                 id: 'instagram-' + Date.now(),
-                title: 'Instagram Post', // Instagram API doesn't always give title easily
+                title: 'Instagram Post',
                 thumbnail: result.media_details?.thumbnail || '',
                 duration: 0,
                 uploader: 'Instagram User',
@@ -79,7 +115,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error('API Error:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch info' },
+            { error: error.message || 'Failed to fetch video info' },
             { status: 500 }
         );
     }

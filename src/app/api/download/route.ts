@@ -1,56 +1,90 @@
 import { NextResponse } from 'next/server';
-import ytdl from '@distube/ytdl-core';
+import { Innertube, UniversalCache } from 'youtubei.js';
+
+// @ts-ignore
 const { instagramGetUrl } = require('instagram-url-direct');
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { url, format } = body; // removed 'quality' as it's not strictly needed for this logic
+        const { url, format } = body;
 
         if (!url) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        const isYouTube = ytdl.validateURL(url);
         const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
+        const isYouTube = url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//);
 
         let downloadUrl = '';
         let ext = 'mp4';
         let filename = 'download';
 
         if (isYouTube) {
-            const info = await ytdl.getInfo(url);
-            filename = info.videoDetails.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+            // Initialize Innertube (creates a session)
+            const yt = await Innertube.create({
+                cache: new UniversalCache(false),
+                generate_session_locally: true
+            });
+
+            // Get video ID
+            let videoId = '';
+            if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1]?.split('?')[0];
+            } else if (url.includes('v=')) {
+                videoId = url.split('v=')[1]?.split('&')[0];
+            } else if (url.includes('shorts/')) {
+                videoId = url.split('shorts/')[1]?.split('?')[0];
+            }
+
+            if (!videoId) throw new Error("Invalid YouTube URL");
+
+            const info = await yt.getInfo(videoId);
+            filename = (info.basic_info.title || 'video').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+
+            const streamingData = info.streaming_data;
+            if (!streamingData) throw new Error("No streaming data found");
+
+            const formats = [
+                ...(streamingData.formats || []),
+                ...(streamingData.adaptive_formats || [])
+            ];
 
             if (format === 'audio') {
-                const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-                if (audioFormat) {
-                    downloadUrl = audioFormat.url;
-                    // Usually webm or m4a, but we label as mp3 for user convenience (browser will likely play it)
-                    // Real conversion requires ffmpeg which we don't have.
-                    // We can just rely on the browser or player handling the container.
-                    ext = audioFormat.container || 'mp3';
+                // Find best audio
+                // Filter for audio-only or formats with audio
+                const audioFormats = formats.filter((f: any) => f.has_audio);
+                // Sort by bitrate (approximate quality)
+                audioFormats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+
+                if (audioFormats.length > 0) {
+                    downloadUrl = audioFormats[0].url;
+                    // Usually we get m4a or webm. 
+                    const mime = audioFormats[0].mime_type || '';
+                    if (mime.includes('webm')) ext = 'webm';
+                    else ext = 'm4a';
+                    // Frontend might treat it as mp3 extension for saving, but browser plays it fine.
                 }
             } else {
-                // Video
-                // Try to find a single file with both audio and video (muxed)
-                const videoFormat = ytdl.chooseFormat(info.formats, { quality: 'highest' });
-                if (videoFormat && videoFormat.hasAudio && videoFormat.hasVideo) {
-                    downloadUrl = videoFormat.url;
-                    ext = videoFormat.container;
+                // Video: Try to find a muxed format (audio+video) first (usually 720p or 360p)
+                // Innertube 'formats' array usually contains these legacy muxed formats.
+                // 'adaptive_formats' are separate streams.
+
+                const muxedFormats = (streamingData.formats || []).filter((f: any) => f.has_audio && f.has_video);
+
+                if (muxedFormats.length > 0) {
+                    // Pick the highest quality one (itag 22 is 720p often)
+                    // Sort by quality label if possible? or just pick first (usually best)
+                    downloadUrl = muxedFormats[0].url;
+                    ext = 'mp4';
                 } else {
-                    // If no muxed format, fallback to highest video (might lack audio)
-                    // OR specifically look for one with audio
-                    const formatsWithAudio = ytdl.filterFormats(info.formats, 'videoandaudio');
-                    if (formatsWithAudio.length > 0) {
-                        downloadUrl = formatsWithAudio[0].url;
-                        ext = formatsWithAudio[0].container;
-                    } else {
-                        // Fallback to whatever 'highest' returned
-                        if (videoFormat) {
-                            downloadUrl = videoFormat.url;
-                            ext = videoFormat.container;
-                        }
+                    // If no muxed format found, default to highest quality video stream (might lack audio!)
+                    // In a real app we'd need to merge on server, but serverless can't easily do that.
+                    // Improving fallback: Just try to get any video url.
+                    const videoFormats = formats.filter((f: any) => f.has_video);
+                    if (videoFormats.length > 0) {
+                        downloadUrl = videoFormats[0].url;
+                        ext = 'mp4';
                     }
                 }
             }
@@ -65,7 +99,7 @@ export async function POST(request: Request) {
 
         if (!downloadUrl) {
             return NextResponse.json(
-                { error: 'Could not resolve a download URL for this video. It might be restricted or require sign-in.' },
+                { error: 'Could not resolve a direct download URL. It might be restricted.' },
                 { status: 404 }
             );
         }
