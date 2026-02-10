@@ -42,7 +42,7 @@ export async function POST(request: Request) {
                 } else {
                     // If no muxed format, fallback to highest video (might lack audio)
                     // OR specifically look for one with audio
-                    const formatsWithAudio = ytdl.filterFormats(info.formats, 'videoqaudio');
+                    const formatsWithAudio = ytdl.filterFormats(info.formats, 'videoandaudio');
                     if (formatsWithAudio.length > 0) {
                         downloadUrl = formatsWithAudio[0].url;
                         ext = formatsWithAudio[0].container;
