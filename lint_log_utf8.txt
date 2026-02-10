@@ -1,0 +1,24 @@
+﻿
+> mammmmmm@0.1.0 lint
+> eslint
+
+
+C:\Users\ASUS\OneDrive\Desktop\mammmmmm\src\app\api\download\route.ts
+  69:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ASUS\OneDrive\Desktop\mammmmmm\src\app\api\info\route.ts
+   4:8   warning  'path' is defined but never used          @typescript-eslint/no-unused-vars
+  47:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ASUS\OneDrive\Desktop\mammmmmm\src\components\features\ClipCreator.tsx
+  5:10  warning  'motion' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ASUS\OneDrive\Desktop\mammmmmm\src\components\features\Downloader.tsx
+  9:10  warning  'toast' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ASUS\OneDrive\Desktop\mammmmmm\src\components\ui\use-toast.ts
+  1:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 7 problems (4 errors, 3 warnings)
+

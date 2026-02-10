@@ -1,0 +1,241 @@
+﻿
+> mammmmmm@0.1.0 build
+> next build
+
+node.exe : ΓÜá 
+Warning: Next.js 
+inferred your 
+workspace root, but 
+it may not be 
+correct.
+At C:\Program Files\n
+odejs\npm.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (ΓÜá War   
+ ning: Ne...not b    
+e correct.:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+ We detected 
+multiple lockfiles 
+and selected the 
+directory of C:\Users
+\ASUS\package-lock.js
+on as the root 
+directory.
+ To silence this 
+warning, set 
+`turbopack.root` in 
+your Next.js config, 
+or consider removing 
+one of the lockfiles 
+if it's not needed.
+   See https://nextjs
+.org/docs/app/api-ref
+erence/config/next-co
+nfig-js/turbopack#roo
+t-directory for more 
+information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\ASUS\On
+eDrive\Desktop\mammmm
+mm\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+
+  Creating an optimized production build ...
+Error: Cannot apply 
+unknown utility 
+class 
+`bg-glass-surface`. 
+Are you using CSS 
+modules or similar 
+and missing 
+`@reference`? https:/
+/tailwindcss.com/docs
+/functions-and-direct
+ives#reference-direct
+ive
+    [2m[at 
+onInvalidCandidate (C
+:\Users\ASUS\OneDrive
+\Desktop\mammmmmm\nod
+e_modules\tailwindcss
+\dist\lib.js:21:1314)
+][0m
+    [2m[at Te (C:\Us
+ers\ASUS\OneDrive\Des
+ktop\mammmmmm\node_mo
+dules\tailwindcss\dis
+t\lib.js:16:36652)][
+0m
+    [2m[at C:\Users\
+ASUS\OneDrive\Desktop
+\mammmmmm\node_module
+s\tailwindcss\dist\li
+b.js:21:355][0m
+    [2m[at Rr (C:\Us
+ers\ASUS\OneDrive\Des
+ktop\mammmmmm\node_mo
+dules\tailwindcss\dis
+t\lib.js:3:1718)][0m
+    [2m[at _ (C:\Use
+rs\ASUS\OneDrive\Desk
+top\mammmmmm\node_mod
+ules\tailwindcss\dist
+\lib.js:3:1377)][0m
+    [2m[at $e (C:\Us
+ers\ASUS\OneDrive\Des
+ktop\mammmmmm\node_mo
+dules\tailwindcss\dis
+t\lib.js:21:172)][0m
+    [2m[at un (C:\Us
+ers\ASUS\OneDrive\Des
+ktop\mammmmmm\node_mo
+dules\tailwindcss\dis
+t\lib.js:38:294)][0m
+    [2m[at process.p
+rocessTicksAndRejecti
+ons (node:internal/pr
+ocess/task_queues:105
+:5)][0m
+    [2m[at async cn 
+(C:\Users\ASUS\OneDri
+ve\Desktop\mammmmmm\n
+ode_modules\tailwindc
+ss\dist\lib.js:38:631
+)][0m
+    [2m[at async Xr 
+(C:\Users\ASUS\OneDri
+ve\Desktop\mammmmmm\n
+ode_modules\@tailwind
+css\node\dist\index.j
+s:10:3417)][0m
+
+> Build error 
+occurred
+Error: Turbopack 
+build failed with 1 
+errors:
+./OneDrive/Desktop/ma
+mmmmmm/src/app/global
+s.css
+Error evaluating 
+Node.js code
+CssSyntaxError: 
+tailwindcss: C:\Users
+\ASUS\OneDrive\Deskto
+p\mammmmmm\src\app\gl
+obals.css:1:1: 
+Cannot apply unknown 
+utility class 
+`bg-glass-surface`. 
+Are you using CSS 
+modules or similar 
+and missing 
+`@reference`? https:/
+/tailwindcss.com/docs
+/functions-and-direct
+ives#reference-direct
+ive
+    at Input.error (O
+neDrive/Desktop/mammm
+mmm/node_modules/post
+css/lib/input.js:135:
+16) [C:\Users\ASUS\On
+eDrive\Desktop\mammmm
+mm\.next\build\chunks
+\14ea7_593dadf6._.js:
+4651:22]
+    at Root.error (On
+eDrive/Desktop/mammmm
+mm/node_modules/postc
+ss/lib/node.js:146:32
+) [C:\Users\ASUS\OneD
+rive\Desktop\mammmmmm
+\.next\build\chunks\1
+4ea7_593dadf6._.js:92
+8:38]
+    [at Object.Once (
+C:\Users\ASUS\OneDriv
+e\Desktop\mammmmmm\no
+de_modules\@tailwindc
+ss\postcss\dist\index
+.js:10:6911)]
+    [at process.proce
+ssTicksAndRejections 
+(node:internal/proces
+s/task_queues:105:5)]
+    at async 
+LazyResult.runAsync (
+OneDrive/Desktop/mamm
+mmmm/node_modules/pos
+tcss/lib/lazy-result.
+js:293:11) [C:\Users\
+ASUS\OneDrive\Desktop
+\mammmmmm\.next\build
+\chunks\14ea7_593dadf
+6._.js:6206:21]
+    at async 
+transform (turbopack:
+///[turbopack-node]/t
+ransforms/postcss.ts:
+70:34) [C:\Users\ASUS
+\OneDrive\Desktop\mam
+mmmmm\.next\build\chu
+nks\[root-of-the-serv
+er]__87cd18bd._.js:14
+6:36]
+    at async run (tur
+bopack:///[turbopack-
+node]/ipc/evaluate.ts
+:92:23) [C:\Users\ASU
+S\OneDrive\Desktop\ma
+mmmmmm\.next\build\ch
+unks\[root-of-the-ser
+ver]__2afa1fd8._.js:4
+43:31]
+
+Import trace:
+  Client Component 
+Browser:
+    ./OneDrive/Deskto
+p/mammmmmm/src/app/gl
+obals.css [Client 
+Component Browser]
+    ./OneDrive/Deskto
+p/mammmmmm/src/app/la
+yout.tsx [Server 
+Component]
+
+
+    at async 
+transform (turbopack:
+///[turbopack-node]/t
+ransforms/postcss.ts:
+70:34) [C:\Users\ASUS
+\OneDrive\Desktop\mam
+mmmmm\.next\build\chu
+nks\[root-of-the-serv
+er]__87cd18bd._.js:14
+6:36])
+    at async run (tur
+bopack:///[turbopack-
+node]/ipc/evaluate.ts
+:92:23) [C:\Users\ASU
+S\OneDrive\Desktop\ma
+mmmmmm\.next\build\ch
+unks\[root-of-the-ser
+ver]__2afa1fd8._.js:4
+43:31])

@@ -1,0 +1,21 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ffff" />
+      <stop offset="100%" stop-color="#bf00ff" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Hexagon-ish Frame -->
+  <path d="M50 5 L85 25 V75 L50 95 L15 75 V25 L50 5Z" stroke="url(#logo-gradient)" stroke-width="2" fill="rgba(255,255,255,0.05)" />
+  
+  <!-- Stylized 'N' with Momentum -->
+  <path d="M35 70 V30 L50 55 L65 30 V70" stroke="url(#logo-gradient)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  
+  <!-- Velocity Line -->
+  <path d="M25 20 L35 25M75 80 L65 75" stroke="#00ffff" stroke-width="2" stroke-linecap="round" opacity="0.5" />
+</svg>
