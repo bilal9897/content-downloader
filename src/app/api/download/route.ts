@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import ytdl from '@distube/ytdl-core';
-// @ts-ignore
-import instagramGetUrl from 'instagram-url-direct';
+const instagramGetUrl: any = require('instagram-url-direct');
 
 export async function POST(request: Request) {
     try {
