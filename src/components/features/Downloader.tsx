@@ -152,7 +152,9 @@ export default function Downloader() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Failed to fetch video info");
+                const errorMessage = data.error || "Failed to fetch video info";
+                const detailedMessage = data.details ? `${errorMessage}: ${data.details}` : errorMessage;
+                throw new Error(detailedMessage);
             }
 
             setVideoInfo(data as VideoInfo);

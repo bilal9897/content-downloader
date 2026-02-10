@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import ytdl from '@distube/ytdl-core';
-const instagramGetUrl: any = require('instagram-url-direct');
+const { instagramGetUrl } = require('instagram-url-direct');
 
 export async function POST(request: Request) {
     try {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error('Download API Error:', error);
         return NextResponse.json(
-            { error: 'Download failed', details: error.message },
+            { error: error.message || 'Download failed' },
             { status: 500 }
         );
     }
