@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import ytdl from 'yt-dlp-exec';
+import ytdl from '@distube/ytdl-core';
+// @ts-ignore
+import instagramGetUrl from 'instagram-url-direct';
 
 export async function POST(request: Request) {
     try {
@@ -10,50 +12,75 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        // Validate URL (basic check supporting YouTube and Instagram)
-        const isYouTube = url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/);
-        const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\/(reels?|stories|p|tv)\/.+$/);
+        const isYouTube = ytdl.validateURL(url);
+        const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
 
-        if (!isYouTube && !isInstagram) {
-            return NextResponse.json({ error: 'Invalid URL. Supported: YouTube, Instagram' }, { status: 400 });
+        if (isYouTube) {
+            const info = await ytdl.getInfo(url);
+
+            // Extract formats
+            const formats = info.formats.map((f: any) => ({
+                format_id: f.itag?.toString(),
+                ext: f.container,
+                resolution: f.qualityLabel || 'audio only',
+                filesize: f.contentLength ? parseInt(f.contentLength) : 0,
+                vcodec: f.videoCodec,
+                acodec: f.audioCodec,
+                url: f.url,
+                hasAudio: f.hasAudio,
+                hasVideo: f.hasVideo
+            }));
+
+            return NextResponse.json({
+                id: info.videoDetails.videoId,
+                title: info.videoDetails.title,
+                thumbnail: info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1].url,
+                duration: parseInt(info.videoDetails.lengthSeconds),
+                uploader: info.videoDetails.author.name,
+                view_count: parseInt(info.videoDetails.viewCount),
+                description: info.videoDetails.description,
+                formats: formats,
+                _type: 'video',
+                platform: 'youtube'
+            });
         }
 
-        // Call yt-dlp using yt-dlp-exec
-        const videoData = await ytdl(url, {
-            dumpSingleJson: true,
-            noWarnings: true,
-            preferFreeFormats: true,
-        });
+        if (isInstagram) {
+            const result = await instagramGetUrl(url);
 
-        // Map the data
-        const info = {
-            id: videoData.id,
-            title: videoData.title,
-            thumbnail: videoData.thumbnail,
-            duration: videoData.duration,
-            uploader: videoData.uploader,
-            view_count: videoData.view_count,
-            description: videoData.description,
-            tags: videoData.tags,
-            formats: videoData.formats?.map((f: any) => ({
-                format_id: f.format_id,
-                ext: f.ext,
-                resolution: f.resolution,
-                filesize: f.filesize,
-                vcodec: f.vcodec,
-                acodec: f.acodec,
-                url: f.url
-            })) || [],
-            _type: (videoData as any)._type || 'video'
-        };
+            // Map Instagram result to common format
+            const formats = [];
 
-        return NextResponse.json(info);
+            // Handle video/image URLs from library
+            if (result.url_list && result.url_list.length > 0) {
+                formats.push({
+                    format_id: 'best',
+                    ext: 'mp4',
+                    resolution: 'best',
+                    url: result.url_list[0],
+                    hasAudio: true,
+                    hasVideo: true
+                });
+            }
 
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            return NextResponse.json({
+                id: 'instagram-' + Date.now(),
+                title: 'Instagram Post', // Instagram API doesn't always give title easily
+                thumbnail: result.media_details?.thumbnail || '',
+                duration: 0,
+                uploader: 'Instagram User',
+                formats: formats,
+                _type: 'video',
+                platform: 'instagram'
+            });
+        }
+
+        return NextResponse.json({ error: 'Unsupported URL. Please use YouTube or Instagram.' }, { status: 400 });
+
+    } catch (error: any) {
         console.error('API Error:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch video info', details: errorMessage },
+            { error: 'Failed to fetch video info', details: error.message },
             { status: 500 }
         );
     }

@@ -5,12 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'i.ytimg.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.fna.fbcdn.net',
+        hostname: '*.googlevideo.com',
         pathname: '/**',
       },
       {
@@ -20,7 +15,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'instagram.f*.fna.fbcdn.net',
+        hostname: '*.fbcdn.net', // Facebook/Instagram CDNs
         pathname: '/**',
       },
     ],

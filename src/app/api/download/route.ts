@@ -1,57 +1,87 @@
 import { NextResponse } from 'next/server';
-import ytdl from 'yt-dlp-exec';
+import ytdl from '@distube/ytdl-core';
+// @ts-ignore
+import instagramGetUrl from 'instagram-url-direct';
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { url, format, quality } = body;
+        const { url, format } = body; // removed 'quality' as it's not strictly needed for this logic
 
         if (!url) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        const options: any = {
-            noWarnings: true,
-        };
+        const isYouTube = ytdl.validateURL(url);
+        const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
 
-        // Format selection
-        if (format === 'audio') {
-            options.extractAudio = true;
-            options.audioFormat = 'mp3';
-            options.audioQuality = quality === '320k' ? '0' : '5';
-            options.format = 'bestaudio/best';
-        } else if (format === 'video') {
-            const height = quality ? quality.replace('p', '') : '720';
-            options.format = `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${height}][ext=mp4]/best`;
-            options.mergeOutputFormat = 'mp4';
+        let downloadUrl = '';
+        let ext = 'mp4';
+        let filename = 'download';
+
+        if (isYouTube) {
+            const info = await ytdl.getInfo(url);
+            filename = info.videoDetails.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+
+            if (format === 'audio') {
+                const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+                if (audioFormat) {
+                    downloadUrl = audioFormat.url;
+                    // Usually webm or m4a, but we label as mp3 for user convenience (browser will likely play it)
+                    // Real conversion requires ffmpeg which we don't have.
+                    // We can just rely on the browser or player handling the container.
+                    ext = audioFormat.container || 'mp3';
+                }
+            } else {
+                // Video
+                // Try to find a single file with both audio and video (muxed)
+                const videoFormat = ytdl.chooseFormat(info.formats, { quality: 'highest' });
+                if (videoFormat && videoFormat.hasAudio && videoFormat.hasVideo) {
+                    downloadUrl = videoFormat.url;
+                    ext = videoFormat.container;
+                } else {
+                    // If no muxed format, fallback to highest video (might lack audio)
+                    // OR specifically look for one with audio
+                    const formatsWithAudio = ytdl.filterFormats(info.formats, 'videoqaudio');
+                    if (formatsWithAudio.length > 0) {
+                        downloadUrl = formatsWithAudio[0].url;
+                        ext = formatsWithAudio[0].container;
+                    } else {
+                        // Fallback to whatever 'highest' returned
+                        if (videoFormat) {
+                            downloadUrl = videoFormat.url;
+                            ext = videoFormat.container;
+                        }
+                    }
+                }
+            }
+        }
+        else if (isInstagram) {
+            const result = await instagramGetUrl(url);
+            if (result.url_list && result.url_list.length > 0) {
+                downloadUrl = result.url_list[0];
+                filename = 'instagram_post';
+            }
         }
 
-        // Get the download URL
-        const videoData = await ytdl(url, {
-            ...options,
-            dumpSingleJson: true,
-        });
-
-        // Find the best format URL
-        let downloadUrl = videoData.url;
-        if (videoData.formats && videoData.formats.length > 0) {
-            const bestFormat = videoData.formats[videoData.formats.length - 1];
-            downloadUrl = bestFormat.url;
+        if (!downloadUrl) {
+            return NextResponse.json(
+                { error: 'Could not resolve a download URL for this video. It might be restricted or require sign-in.' },
+                { status: 404 }
+            );
         }
 
-        // Return redirect to the actual video URL
         return NextResponse.json({
             success: true,
             url: downloadUrl,
-            title: videoData.title,
-            ext: format === 'audio' ? 'mp3' : 'mp4'
+            title: filename,
+            ext: ext
         });
 
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    } catch (error: any) {
         console.error('Download API Error:', error);
         return NextResponse.json(
-            { error: 'Download failed', details: errorMessage },
+            { error: 'Download failed', details: error.message },
             { status: 500 }
         );
     }
