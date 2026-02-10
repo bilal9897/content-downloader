@@ -12,8 +12,6 @@ export async function POST(request: Request) {
 
         const options: any = {
             noWarnings: true,
-            noCallHome: true,
-            preferFreeFormats: true,
         };
 
         // Format selection

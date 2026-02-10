@@ -22,7 +22,6 @@ export async function POST(request: Request) {
         const videoData = await ytdl(url, {
             dumpSingleJson: true,
             noWarnings: true,
-            noCallHome: true,
             preferFreeFormats: true,
         });
 
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
                 acodec: f.acodec,
                 url: f.url
             })) || [],
-            _type: videoData._type || 'video'
+            _type: (videoData as any)._type || 'video'
         };
 
         return NextResponse.json(info);
