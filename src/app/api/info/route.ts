@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { VideoFormat } from '@/lib/types';
-
-const execAsync = promisify(exec);
+import ytdl from 'yt-dlp-exec';
 
 export async function POST(request: Request) {
     try {
@@ -22,23 +18,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid URL. Supported: YouTube, Instagram' }, { status: 400 });
         }
 
-        // Call yt-dlp to get JSON info
-        // Using --dump-single-json to get flat JSON for playlists too (or handle playlists separate)
-        // --flat-playlist to not download video info for every video in playlist if it is a playlist
-        const command = `python -m yt_dlp --dump-single-json --no-warnings --no-call-home "${url}"`;
+        // Call yt-dlp using yt-dlp-exec
+        const videoData = await ytdl(url, {
+            dumpSingleJson: true,
+            noWarnings: true,
+            noCallHome: true,
+            preferFreeFormats: true,
+        });
 
-        // In production, you might need to set the path to yt-dlp binary if not in PATH
-        // locally we installed it via pip so it should be in PATH or we use 'python -m yt_dlp'
-
-        const { stdout, stderr } = await execAsync(command);
-
-        if (stderr) {
-            console.warn('yt-dlp stderr:', stderr);
-        }
-
-        const videoData = JSON.parse(stdout);
-
-        // Initial simple mapping
+        // Map the data
         const info = {
             id: videoData.id,
             title: videoData.title,
@@ -48,7 +36,7 @@ export async function POST(request: Request) {
             view_count: videoData.view_count,
             description: videoData.description,
             tags: videoData.tags,
-            formats: videoData.formats?.map((f: VideoFormat) => ({
+            formats: videoData.formats?.map((f: any) => ({
                 format_id: f.format_id,
                 ext: f.ext,
                 resolution: f.resolution,
