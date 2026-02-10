@@ -3,6 +3,7 @@
 import Downloader from "@/components/features/Downloader";
 import { motion } from "framer-motion";
 import { Shield, Zap, Layout, Globe, ArrowRight, Github } from "lucide-react";
+import AdSlot from "@/components/ui/AdSlot";
 
 export default function Home() {
   // Register Service Worker for PWA
@@ -82,35 +83,58 @@ export default function Home() {
               <div className="absolute -inset-4 md:-inset-10 bg-neon-blue/20 blur-3xl opacity-20 pointer-events-none" />
               <Downloader />
             </div>
+
+            {/* In-Hero Ad Slot */}
+            <div className="mt-12 opacity-50">
+              <AdSlot id="HERO-BOTTOM-AD" />
+            </div>
           </div>
         </section>
 
         {/* Features Grid - Refined "Small Box" layout */}
         <section id="features" className="section-padding py-16 md:py-32 bg-black/50">
           <div className="max-w-7xl mx-auto px-4 md:px-6">
-            <div className="mb-10 md:mb-16 text-center md:text-left flex flex-col items-center md:items-start">
-              <h2 className="text-lg md:text-3xl font-black tracking-tight mb-2 uppercase italic text-white/50 tracking-[0.2em] relative">
-                Advanced Arsenal
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-12 h-1 bg-neon-blue rounded-full" />
-              </h2>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {features.map((f, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (i % 4) * 0.1 }}
-                  viewport={{ once: true }}
-                  className="p-5 md:p-8 rounded-2xl md:rounded-3xl glass-panel group hover:border-white/20 transition-all duration-500 flex flex-col items-center text-center md:items-start md:text-left h-full"
-                >
-                  <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-${f.color}/10 flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-${f.color}/5`}>
-                    <f.icon className={`w-5 h-5 md:w-7 md:h-7 text-${f.color}`} />
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_256px] gap-8">
+              <div className="space-y-16">
+                <div className="text-center md:text-left flex flex-col items-center md:items-start">
+                  <h2 className="text-lg md:text-3xl font-black tracking-tight mb-2 uppercase italic text-white/50 tracking-[0.2em] relative">
+                    Advanced Arsenal
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-12 h-1 bg-neon-blue rounded-full" />
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 gap-4 md:gap-6">
+                  {features.map((f, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="group p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all duration-500"
+                    >
+                      <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-${f.color}/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500`}>
+                        <f.icon className={`w-5 h-5 md:w-6 md:h-6 text-white`} />
+                      </div>
+                      <h3 className="text-[13px] md:text-lg font-black mb-2 uppercase tracking-tight">{f.title}</h3>
+                      <p className="text-[11px] md:text-sm text-white/40 leading-relaxed font-medium">{f.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sidebar Ad Column */}
+              <div className="hidden lg:flex flex-col gap-6">
+                <div className="sticky top-32">
+                  <div className="flex items-center gap-2 mb-4 text-[10px] font-black uppercase tracking-widest text-white/30">
+                    <Shield className="w-3 h-3" />
+                    <span>Laboratory Intel</span>
                   </div>
-                  <h3 className="text-[11px] md:text-xl font-bold mb-1.5 md:mb-3 uppercase tracking-tighter text-white/90">{f.title}</h3>
-                  <p className="text-white/30 text-[10px] md:text-[15px] leading-tight md:leading-relaxed line-clamp-2 md:line-clamp-none font-medium text-balance">{f.desc}</p>
-                </motion.div>
-              ))}
+                  <AdSlot type="vertical" id="SIDEBAR-PRIORITY-AD" />
+                  <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-[10px] text-white/30 leading-relaxed uppercase font-black tracking-widest text-center">Protocol V1.0 Active</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
