@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏙️ SIPHON | Media Harvesting Laboratory
+### Built for the Future by [Bilal Salmani](https://github.com/bilal9897)
 
-## Getting Started
+![SIPHON Banner](https://raw.githubusercontent.com/bilal9897/Social-Media-Content-Downloader/master/public/logo.svg)
 
-First, run the development server:
+**SIPHON** is a premium, AI-driven media extraction utility designed for high-performance harvesting of content across the digital arsenal. From YouTube 4K extractions to Instagram Reels and Stories, SIPHON provides a glassmorphic, ultra-fast interface for the modern web.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛡️ Technical Arsenal
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **🚀 Performance Engine**: Native-speed streaming using `yt-dlp` and `ffmpeg` for multi-threaded harvesting.
+- **📸 Social Integration**: Full support for **Instagram Reels**, **Stories**, and **IGTV**.
+- **🎧 High-Fidelity Audio**: Extract crystal clear MP3s at **320kbps** or standard **128kbps**.
+- **📺 Multiformat Video**: Precision selection for **1080p**, **720p**, and **360p** resolutions.
+- **🧠 Media Insights**: AI-ready metadata extraction. View **Captions** and **Hashtags** instantly.
+- **🎨 Glassmorphic UI**: A dynamic, premium interface that adapts its accent colors to your media thumbnails.
+- **📱 Standalone PWA**: Install SIPHON as a native application on any OS (iOS, Android, Windows, macOS).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠️ Installation & Setup
 
-To learn more about Next.js, take a look at the following resources:
+### Prerequisites
+- **Node.js 18+**
+- **Python 3** (Required for `yt-dlp`)
+- **FFmpeg** (Required for high-quality merging and MP3 transcoding)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Quick Start
+1. **Clone the laboratory**:
+   ```bash
+   git clone https://github.com/bilal9897/Social-Media-Content-Downloader.git
+   cd Social-Media-Content-Downloader
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. **Deploy the local engine**:
+   ```bash
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚀 Deployment (Production)
+
+Because SIPHON requires system-level binaries (`python` and `ffmpeg`), standard serverless platforms like Netlify/Vercel are not recommended for the full feature set.
+
+### Recommended: Render / Railway / VPS
+We provide a **Dockerfile** for containerized deployment.
+
+1. Connect your repository to **Render.com**.
+2. Select **Web Service**.
+3. Render will detect the `Dockerfile` and automatically:
+   - Install Node.js & dependencies.
+   - Install Python 3 & `yt-dlp`.
+   - Install FFmpeg.
+   - Build and serve the SIPHON Laboratory.
+
+---
+
+## 📜 License & Acknowledgments
+
+- **License**: MIT License - Created by Bilal Salmani (2026).
+- **Engine**: Powered by the legendary `yt-dlp` and `ffmpeg` libraries.
+
+---
+
+### 🛡️ Secure. Fast. Premium. Welcome to **SIPHON**.
