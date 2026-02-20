@@ -1,8 +1,64 @@
 import { NextResponse } from 'next/server';
 import { Innertube, UniversalCache } from 'youtubei.js';
+import ytdlp from 'yt-dlp-exec';
+import path from 'path';
 
 // @ts-ignore
 const { instagramGetUrl } = require('instagram-url-direct');
+
+// Helper function to use yt-dlp for unsupported sites
+async function getVideoInfoWithYtDlp(url: string) {
+    // Platform-agnostic binary path resolution
+    const isWindows = process.platform === 'win32';
+    const binaryBase = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin');
+    const binaryPath = isWindows ? path.join(binaryBase, 'yt-dlp.exe') : path.join(binaryBase, 'yt-dlp');
+
+    // @ts-ignore
+    const ytdlpCustom = require('yt-dlp-exec').create(binaryPath);
+
+    try {
+        // Get video info using yt-dlp
+        const result = await ytdlpCustom(url, {
+            dumpSingleJson: true,
+            noCheckCertificate: true,
+            preferFreeFormats: true,
+        });
+
+        // Transform yt-dlp output to our format
+        const formats = (result.formats || []).map((f: any) => ({
+            format_id: f.format_id,
+            ext: f.ext,
+            resolution: f.resolution || f.height + 'p' || 'audio only',
+            filesize: f.filesize || f.filesize_approx || 0,
+            vcodec: f.vcodec || 'none',
+            acodec: f.acodec || 'none',
+            url: f.url,
+            hasAudio: !!f.acodec && f.acodec !== 'none',
+            hasVideo: !!f.vcodec && f.vcodec !== 'none'
+        }));
+
+        // Sort formats by quality
+        formats.sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
+
+        return {
+            id: result.id || 'unknown',
+            title: result.title || 'Unknown Title',
+            thumbnail: result.thumbnail || '',
+            duration: result.duration || 0,
+            uploader: result.uploader || result.channel || 'Unknown',
+            view_count: result.view_count || 0,
+            description: result.description || '',
+            tags: result.tags || [],
+            formats: formats,
+            _type: 'video',
+            platform: 'yt-dlp',
+            webpage_url: result.webpage_url
+        };
+    } catch (error: any) {
+        console.error('yt-dlp error:', error);
+        throw new Error(`Failed to fetch video info: ${error.message}`);
+    }
+}
 
 export async function POST(request: Request) {
     try {
@@ -15,6 +71,18 @@ export async function POST(request: Request) {
 
         const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
         const isYouTube = url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//);
+
+        // Check for other supported sites using yt-dlp
+        const isDiskwala = url.includes('diskwala.com');
+        const isTeraBox = url.match(/\b(terabox(app)?|nephobox|mirrobox|momix|4shared)\.com\b/i);
+        const isRecom = url.includes('recom') || url.includes('re-link') || url.includes('relink');
+
+        // Use yt-dlp for diskwala, terabox, recom, and any other unsupported sites
+        if (isDiskwala || isTeraBox || isRecom || (!isYouTube && !isInstagram)) {
+            // Use yt-dlp as a universal fallback
+            const info = await getVideoInfoWithYtDlp(url);
+            return NextResponse.json(info);
+        }
 
         if (isYouTube) {
             // Initialize Innertube (creates a session)
@@ -81,33 +149,47 @@ export async function POST(request: Request) {
         }
 
         if (isInstagram) {
-            const result = await instagramGetUrl(url);
+            try {
+                // Try yt-dlp first for Instagram as it provides better metadata
+                const info = await getVideoInfoWithYtDlp(url);
+                return NextResponse.json({
+                    ...info,
+                    platform: 'instagram'
+                });
+            } catch (error) {
+                console.warn('yt-dlp failed for Instagram info, falling back to instagram-url-direct:', error);
 
-            // Map Instagram result to common format
-            const formats = [];
+                const result = await instagramGetUrl(url);
 
-            // Handle video/image URLs from library
-            if (result.url_list && result.url_list.length > 0) {
-                formats.push({
-                    format_id: 'best',
-                    ext: 'mp4',
-                    resolution: 'best',
-                    url: result.url_list[0],
-                    hasAudio: true,
-                    hasVideo: true
+                // Map Instagram result to common format
+                const formats = [];
+
+                // Handle video/image URLs from library
+                if (result.url_list && result.url_list.length > 0) {
+                    const mediaUrl = result.url_list[0];
+                    const isVideo = mediaUrl.includes('.mp4') || mediaUrl.includes('.mov');
+
+                    formats.push({
+                        format_id: 'best',
+                        ext: isVideo ? 'mp4' : 'jpg',
+                        resolution: 'best',
+                        url: mediaUrl,
+                        hasAudio: isVideo,
+                        hasVideo: isVideo
+                    });
+                }
+
+                return NextResponse.json({
+                    id: 'instagram-' + Date.now(),
+                    title: 'Instagram Post',
+                    thumbnail: result.media_details?.thumbnail || '',
+                    duration: 0,
+                    uploader: 'Instagram User',
+                    formats: formats,
+                    _type: formats.length > 0 && formats[0].hasVideo ? 'video' : 'image',
+                    platform: 'instagram'
                 });
             }
-
-            return NextResponse.json({
-                id: 'instagram-' + Date.now(),
-                title: 'Instagram Post',
-                thumbnail: result.media_details?.thumbnail || '',
-                duration: 0,
-                uploader: 'Instagram User',
-                formats: formats,
-                _type: 'video',
-                platform: 'instagram'
-            });
         }
 
         return NextResponse.json({ error: 'Unsupported URL. Please use YouTube or Instagram.' }, { status: 400 });

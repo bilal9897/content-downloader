@@ -19,6 +19,7 @@ import { useQueue } from "@/hooks/useQueue";
 import QueueDrawer from "./QueueDrawer";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import AdSlot from "@/components/ui/AdSlot";
 
 export default function Downloader() {
     const [url, setUrl] = useState("");
@@ -188,7 +189,10 @@ export default function Downloader() {
                 })
             });
 
-            if (!response.ok) throw new Error('Download failed');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Download failed');
+            }
             if (!response.body) throw new Error('No response body');
 
             const reader = response.body.getReader();
@@ -362,6 +366,11 @@ export default function Downloader() {
                 updateSettings={updateSettings}
             />
 
+            {/* Top Ad Slot */}
+            <div className="w-full max-w-4xl mx-auto mb-8">
+                <AdSlot id="TOP-BANNER" type="horizontal" className="shadow-2xl shadow-neon-blue/5" />
+            </div>
+
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -436,20 +445,29 @@ export default function Downloader() {
                                 <div className="relative w-full md:w-48 aspect-video rounded-xl overflow-hidden border border-white/10 shadow-lg group/preview"
                                     style={{ borderColor: accentColor ? accentColor : 'rgba(255,255,255,0.1)' }}
                                 >
-                                    <Image
-                                        src={videoInfo.thumbnail}
-                                        alt={videoInfo.title}
-                                        fill
-                                        className="object-cover group-hover/preview:opacity-0 transition-opacity"
-                                    />
-
-                                    <div className="absolute inset-0 opacity-0 group-hover/preview:opacity-100 transition-opacity bg-black">
-                                        <iframe
-                                            src={`https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${videoInfo.id}`}
-                                            className="w-full h-full pointer-events-none scale-150"
-                                            allow="autoplay"
+                                    {videoInfo.thumbnail ? (
+                                        <Image
+                                            src={videoInfo.thumbnail}
+                                            alt={videoInfo.title}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            className="object-cover group-hover/preview:opacity-0 transition-opacity"
                                         />
-                                    </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center w-full h-full bg-white/5 text-white/20">
+                                            <Sparkles className="w-8 h-8 opacity-20" />
+                                        </div>
+                                    )}
+
+                                    {videoInfo.platform === 'youtube' && (
+                                        <div className="absolute inset-0 opacity-0 group-hover/preview:opacity-100 transition-opacity bg-black">
+                                            <iframe
+                                                src={`https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${videoInfo.id}`}
+                                                className="w-full h-full pointer-events-none scale-150"
+                                                allow="autoplay"
+                                            />
+                                        </div>
+                                    )}
 
                                     <div className="absolute top-2 right-2 flex flex-col gap-2 z-30">
                                         <button
@@ -609,6 +627,11 @@ export default function Downloader() {
                 onProcess={processItem}
                 onClearCompleted={clearCompleted}
             />
+
+            {/* Bottom Ad Slot */}
+            <div className="w-full max-w-4xl mx-auto mt-12 pb-12">
+                <AdSlot id="BOTTOM-BANNER" type="horizontal" className="shadow-2xl shadow-neon-purple/5" />
+            </div>
         </div >
     );
 }
