@@ -10,15 +10,16 @@ import { execSync } from 'child_process';
 // Helper to check if python is available
 function hasPython() {
     try {
-        execSync('python3 --version', { stdio: 'ignore' });
-        return true;
-    } catch (e) {
-        try {
-            execSync('python --version', { stdio: 'ignore' });
-            return true;
-        } catch (e2) {
-            return false;
+        // use 'where' on windows to find python
+        if (process.platform === 'win32') {
+            try { execSync('where python', { stdio: 'ignore' }); return true; } catch (e) { }
+            try { execSync('where python3', { stdio: 'ignore' }); return true; } catch (e) { }
         }
+        try { execSync('python3 --version', { stdio: 'ignore' }); return true; } catch (e) { }
+        try { execSync('python --version', { stdio: 'ignore' }); return true; } catch (e) { }
+        return false;
+    } catch (e) {
+        return false;
     }
 }
 
@@ -177,10 +178,13 @@ export async function POST(request: Request) {
         }
 
         // --- STREAMING PROXY LOGIC ---
+        console.log(`Proxying download from: ${downloadUrl.substring(0, 50)}...`);
         const videoResponse = await fetch(downloadUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://www.youtube.com/',
+                'Referer': isYouTube ? 'https://www.youtube.com/' : isInstagram ? 'https://www.instagram.com/' : url,
+                'Accept': '*/*',
+                'Accept-Language': 'en-US,en;q=0.9',
             }
         });
 

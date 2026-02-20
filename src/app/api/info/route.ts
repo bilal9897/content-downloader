@@ -10,21 +10,21 @@ import { execSync } from 'child_process';
 // Helper to check if python is available
 function hasPython() {
     try {
-        execSync('python3 --version', { stdio: 'ignore' });
-        return true;
-    } catch (e) {
-        try {
-            execSync('python --version', { stdio: 'ignore' });
-            return true;
-        } catch (e2) {
-            return false;
+        // use 'where' on windows to find python
+        if (process.platform === 'win32') {
+            try { execSync('where python', { stdio: 'ignore' }); return true; } catch (e) { }
+            try { execSync('where python3', { stdio: 'ignore' }); return true; } catch (e) { }
         }
+        try { execSync('python3 --version', { stdio: 'ignore' }); return true; } catch (e) { }
+        try { execSync('python --version', { stdio: 'ignore' }); return true; } catch (e) { }
+        return false;
+    } catch (e) {
+        return false;
     }
 }
 
 // Helper function to use yt-dlp for unsupported sites
 async function getVideoInfoWithYtDlp(url: string) {
-    // Platform-agnostic binary path resolution
     const isWindows = process.platform === 'win32';
     const binaryBase = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin');
     const binaryPath = isWindows ? path.join(binaryBase, 'yt-dlp.exe') : path.join(binaryBase, 'yt-dlp');
@@ -33,12 +33,23 @@ async function getVideoInfoWithYtDlp(url: string) {
     const ytdlpCustom = require('yt-dlp-exec').create(binaryPath);
 
     try {
-        // Get video info using yt-dlp
-        const result = await ytdlpCustom(url, {
+        const isInstagram = url.includes('instagram.com');
+        const args: any = {
             dumpSingleJson: true,
             noCheckCertificate: true,
             preferFreeFormats: true,
-        });
+        };
+
+        // Add convincing headers for Instagram
+        if (isInstagram) {
+            args.addHeader = [
+                'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer:https://www.instagram.com/',
+                'Accept-Language:en-US,en;q=0.9'
+            ];
+        }
+
+        const result = await ytdlpCustom(url, args);
 
         // Transform yt-dlp output to our format
         const formats = (result.formats || []).map((f: any) => ({
@@ -186,36 +197,71 @@ export async function POST(request: Request) {
             } catch (error) {
                 console.warn('yt-dlp failed or unavailable for Instagram info, falling back to instagram-url-direct:', error);
 
-                const result = await instagramGetUrl(url);
+                try {
+                    const result = await instagramGetUrl(url);
 
-                // Map Instagram result to common format
-                const formats = [];
+                    // Map Instagram result to common format
+                    const formats = [];
 
-                // Handle video/image URLs from library
-                if (result.url_list && result.url_list.length > 0) {
-                    const mediaUrl = result.url_list[0];
-                    const isVideo = mediaUrl.includes('.mp4') || mediaUrl.includes('.mov');
+                    // Handle video/image URLs from library
+                    if (result.url_list && result.url_list.length > 0) {
+                        const mediaUrl = result.url_list[0];
+                        const isVideo = mediaUrl.includes('.mp4') || mediaUrl.includes('.mov');
 
-                    formats.push({
-                        format_id: 'best',
-                        ext: isVideo ? 'mp4' : 'jpg',
-                        resolution: 'best',
-                        url: mediaUrl,
-                        hasAudio: isVideo,
-                        hasVideo: isVideo
+                        formats.push({
+                            format_id: 'best',
+                            ext: isVideo ? 'mp4' : 'jpg',
+                            resolution: 'best',
+                            url: mediaUrl,
+                            hasAudio: isVideo,
+                            hasVideo: isVideo
+                        });
+                    }
+
+                    return NextResponse.json({
+                        id: 'instagram-' + Date.now(),
+                        title: 'Instagram Post',
+                        thumbnail: result.media_details?.thumbnail || '',
+                        duration: 0,
+                        uploader: 'Instagram User',
+                        formats: formats,
+                        _type: formats.length > 0 && formats[0].hasVideo ? 'video' : 'image',
+                        platform: 'instagram'
                     });
-                }
+                } catch (libError) {
+                    console.warn('All Instagram libraries failed, attempting direct metadata fallback:', libError);
 
-                return NextResponse.json({
-                    id: 'instagram-' + Date.now(),
-                    title: 'Instagram Post',
-                    thumbnail: result.media_details?.thumbnail || '',
-                    duration: 0,
-                    uploader: 'Instagram User',
-                    formats: formats,
-                    _type: formats.length > 0 && formats[0].hasVideo ? 'video' : 'image',
-                    platform: 'instagram'
-                });
+                    try {
+                        // Final fallback: try to scrape metadata directly
+                        const response = await fetch(url, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            }
+                        });
+                        const html = await response.text();
+
+                        // Simple regex to extract thumbnail and title
+                        const ogImage = html.match(/property="og:image"\s+content="([^"]+)"/) || html.match(/content="([^"]+)"\s+property="og:image"/);
+                        const ogTitle = html.match(/property="og:title"\s+content="([^"]+)"/) || html.match(/content="([^"]+)"\s+property="og:title"/);
+
+                        if (ogImage || ogTitle) {
+                            return NextResponse.json({
+                                id: 'instagram-meta-' + Date.now(),
+                                title: (ogTitle && ogTitle[1]) ? ogTitle[1] : 'Instagram Post',
+                                thumbnail: (ogImage && ogImage[1]) ? ogImage[1] : '',
+                                duration: 0,
+                                uploader: 'Instagram User',
+                                formats: [],
+                                _type: 'video',
+                                platform: 'instagram'
+                            });
+                        }
+                    } catch (metaError) {
+                        console.error('Metadata fallback also failed:', metaError);
+                    }
+
+                    throw libError; // If all failed, throw last library error
+                }
             }
         }
 
