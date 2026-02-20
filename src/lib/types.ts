@@ -18,6 +18,7 @@ export interface VideoInfo {
     view_count: number;
     description: string;
     tags?: string[];
+    platform?: 'youtube' | 'instagram' | 'other';
     _type?: string; // 'playlist' or 'video'
 }
 
