@@ -26,11 +26,13 @@ To take your Media Downloader project live, follow these steps.
 ## 2. AdSense Setup
 
 1.  **AdSense Account**: Ensure you have an approved Google AdSense account.
-2.  **Replace IDs**: Open `src/components/ui/AdSlot.tsx` and replace the placeholder `data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"` with your actual AdSense Publisher ID.
+2.  **Environment Variables**: Instead of editing code, add these variables to your hosting provider (Vercel/Railway):
+    - `NEXT_PUBLIC_ADSENSE_PUB_ID`: Your Publisher ID (e.g., `ca-pub-XXXXXXXXXX`).
+    - `NEXT_PUBLIC_ADSENSE_SLOT_ID`: Your default Slot ID.
 3.  **Manage Units**: I've placed two ad units:
     - `TOP-BANNER`: Appears above the link input.
     - `BOTTOM-BANNER`: Appears at the bottom of the page.
-4.  **Auto Ads**: If you prefer Google's "Auto Ads", you can add the AdSense script tag to `src/app/layout.tsx`.
+4.  **Local Testing**: Copy `.env.example` to `.env.local` and add your IDs to test locally.
 
 ## 3. Important Considerations
 

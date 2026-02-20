@@ -41,12 +41,12 @@ export default function AdSlot({ className, id, type = "horizontal" }: AdSlotPro
                 <div className="absolute bottom-2 right-2 w-1 h-1 bg-neon-blue rounded-full" />
             </div>
 
-            {/* AdScript Target (Hidden until script loads) */}
+            {/* Actual AdSense Slot Target */}
             <ins
                 className="adsbygoogle"
                 style={{ display: "block" }}
-                data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-                data-ad-slot={id || "XXXXXXXXXX"}
+                data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || "ca-pub-XXXXXXXXXXXXXXXX"}
+                data-ad-slot={id || process.env.NEXT_PUBLIC_ADSENSE_SLOT_ID || "XXXXXXXXXX"}
                 data-ad-format="auto"
                 data-full-width-responsive="true"
             />
