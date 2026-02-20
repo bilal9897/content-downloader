@@ -5,6 +5,22 @@ import path from 'path';
 
 // @ts-ignore
 const { instagramGetUrl } = require('instagram-url-direct');
+import { execSync } from 'child_process';
+
+// Helper to check if python is available
+function hasPython() {
+    try {
+        execSync('python3 --version', { stdio: 'ignore' });
+        return true;
+    } catch (e) {
+        try {
+            execSync('python --version', { stdio: 'ignore' });
+            return true;
+        } catch (e2) {
+            return false;
+        }
+    }
+}
 
 // Helper function to use yt-dlp for unsupported sites
 async function getVideoInfoWithYtDlp(url: string) {
@@ -71,6 +87,7 @@ export async function POST(request: Request) {
 
         const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
         const isYouTube = url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//);
+        const isPythonAvailable = hasPython();
 
         // Check for other supported sites using yt-dlp
         const isDiskwala = url.includes('diskwala.com');
@@ -79,12 +96,19 @@ export async function POST(request: Request) {
 
         // Use yt-dlp for diskwala, terabox, recom, and any other unsupported sites
         if (isDiskwala || isTeraBox || isRecom || (!isYouTube && !isInstagram)) {
+            if (!isPythonAvailable) {
+                return NextResponse.json({
+                    error: 'This platform (Vercel) does not support TeraBox/Other sites because it lacks Python. Please use Railway or Render for full support.'
+                }, { status: 400 });
+            }
             // Use yt-dlp as a universal fallback
             const info = await getVideoInfoWithYtDlp(url);
             return NextResponse.json(info);
         }
 
         if (isYouTube) {
+            // If on Vercel (no python), always use Innertube for YouTube
+            // If python is available, we could still use it, but Innertube is faster for info
             // Initialize Innertube (creates a session)
             const yt = await Innertube.create({
                 cache: new UniversalCache(false),
@@ -150,14 +174,17 @@ export async function POST(request: Request) {
 
         if (isInstagram) {
             try {
-                // Try yt-dlp first for Instagram as it provides better metadata
+                // Try yt-dlp first for Instagram as it provides better metadata, but ONLY if python is available
+                if (!isPythonAvailable) {
+                    throw new Error('Python not available');
+                }
                 const info = await getVideoInfoWithYtDlp(url);
                 return NextResponse.json({
                     ...info,
                     platform: 'instagram'
                 });
             } catch (error) {
-                console.warn('yt-dlp failed for Instagram info, falling back to instagram-url-direct:', error);
+                console.warn('yt-dlp failed or unavailable for Instagram info, falling back to instagram-url-direct:', error);
 
                 const result = await instagramGetUrl(url);
 

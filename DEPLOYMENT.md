@@ -2,17 +2,26 @@
 
 To take your Media Downloader project live, follow these steps. 
 
-## 1. Hosting Options
+## 1. Hosting Options & Trade-offs
 
-### Vercel (Recommended)
-1.  **Connect GitHub**: Push your code to a GitHub repository and connect it to Vercel.
-2.  **Environment Variables**: No special environment variables are required for basic functionality unless you want to add custom API keys.
-3.  **Automatic Build**: Vercel will detect the Next.js project and build it automatically.
-4.  **Self-Hosting Binary**: The `yt-dlp` binary is managed via `yt-dlp-exec`. I've updated the code to detect the Linux environment on Vercel and use the correct binary automatically.
+### ⚠️ IMPORTANT: Vercel vs. Railway/Render
 
-### Railway / Render
-1.  **Docker Support**: You can use the existing `Dockerfile` if you prefer containerized deployment.
-2.  **Binary Path**: Ensure that the `yt-dlp` binary is accessible in the container.
+| Feature | Vercel (Serverless) | Railway / Render (Docker/VPS) |
+| :--- | :--- | :--- |
+| **YouTube** | ✅ Supported (via Node-native fallback) | ✅ Fully Supported (via yt-dlp) |
+| **Instagram** | ❌ Limited (Ip blocking + no Python) | ✅ Fully Supported |
+| **TeraBox/Others** | ❌ Not Supported (no Python) | ✅ Fully Supported |
+| **Video Stabilization** | ⚠️ Moderate | ✅ High |
+
+### Vercel (Best for quick YouTube-only)
+1. **Connect GitHub**: Push your code to a GitHub repository and connect it to Vercel.
+2. **Fallback Logic**: I've added a fallback to `youtubei.js` (Innertube) which is Node-native. This allows YouTube downloads to work even though Vercel has no Python.
+3. **Limitations**: Instagram and TeraBox extraction will likely fail on Vercel because they require `yt-dlp` (Python).
+
+### Railway / Render (RECOMMENDED for full features)
+1. **Docker Support**: These platforms support the existing `Dockerfile`.
+2. **Environment**: They provide a full Linux environment where Python 3 and FFmpeg can be installed.
+3. **Stability**: This is the only way to get full support for Instagram, TeraBox, and high-quality YouTube processing.
 
 ## 2. AdSense Setup
 

@@ -5,6 +5,22 @@ import path from 'path';
 
 // @ts-ignore
 const { instagramGetUrl } = require('instagram-url-direct');
+import { execSync } from 'child_process';
+
+// Helper to check if python is available
+function hasPython() {
+    try {
+        execSync('python3 --version', { stdio: 'ignore' });
+        return true;
+    } catch (e) {
+        try {
+            execSync('python --version', { stdio: 'ignore' });
+            return true;
+        } catch (e2) {
+            return false;
+        }
+    }
+}
 
 // Helper function to get download URL using yt-dlp
 async function getDownloadUrlWithYtDlp(url: string, format: string) {
@@ -77,6 +93,7 @@ export async function POST(request: Request) {
 
         const isInstagram = url.match(/^(https?:\/\/)?(www\.)?instagram\.com\//);
         const isYouTube = url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//);
+        const isPythonAvailable = hasPython();
 
         // Check for other supported sites using yt-dlp
         const isDiskwala = url.includes('diskwala.com');
@@ -89,6 +106,11 @@ export async function POST(request: Request) {
 
         // Use yt-dlp for diskwala, terabox, recom, and any other unsupported sites
         if (isDiskwala || isTeraBox || isRecom || (!isYouTube && !isInstagram)) {
+            if (!isPythonAvailable) {
+                return NextResponse.json({
+                    error: 'Vercel does not support downloading from this site (missing Python). Please use Railway or Render.'
+                }, { status: 400 });
+            }
             const result = await getDownloadUrlWithYtDlp(url, format);
             downloadUrl = result.url;
             filename = result.filename;
@@ -114,11 +136,30 @@ export async function POST(request: Request) {
 
             if (!videoId) throw new Error("Invalid YouTube URL");
 
-            // Use yt-dlp for YouTube instead of youtubei.js because it's more reliable at deciphering signatures
-            const result = await getDownloadUrlWithYtDlp(url, format);
-            downloadUrl = result.url;
-            filename = result.filename;
-            ext = result.ext;
+            // If Python is available, use yt-dlp for YouTube (more stable/reliable)
+            // Otherwise, fall back to Innertube (Node-native) for Vercel
+            if (isPythonAvailable) {
+                const result = await getDownloadUrlWithYtDlp(url, format);
+                downloadUrl = result.url;
+                filename = result.filename;
+                ext = result.ext;
+            } else {
+                console.log('Python not found, using Innertube fallback for YouTube download');
+                const info = await yt.getInfo(videoId);
+                const formats = [
+                    ...(info.streaming_data?.formats || []),
+                    ...(info.streaming_data?.adaptive_formats || [])
+                ];
+
+                // Prioritize video+audio combined formats, or just the best available
+                const chosenFormat = formats.find(f => f.has_video && f.has_audio) || formats[0];
+
+                if (!chosenFormat) throw new Error("No suitable format found via Innertube");
+
+                downloadUrl = await chosenFormat.decipher(yt.session.player);
+                filename = (info.basic_info.title || 'video').replace(/[^a-z0-9]/gi, '_');
+                ext = format === 'audio' ? 'mp3' : 'mp4';
+            }
         }
         else if (isInstagram) {
             const result = await instagramGetUrl(url);
